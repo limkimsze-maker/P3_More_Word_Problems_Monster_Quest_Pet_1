@@ -411,7 +411,7 @@
     <div class="topbar">
       <div class="title">
         <h1>Two-Part Word Problem — Step by Step</h1>
-        <div class="sub">For P3 pupils: a shorter 5-question mission, clear next step, and quick success.</div>
+        <div class="sub">For P3 pupils: a shorter 3-question mission, clear next step, and quick success.</div>
       </div>
       <div class="toolbar">
         <button class="btn" id="btnUnlockAudio" type="button">🔊 Unlock Audio</button>
@@ -445,8 +445,8 @@
 
             <div class="journeyBox">
               <div class="journeyTop">
-                <div class="journeyTitle" id="journeyTitle">Question 1 of 5</div>
-                <div class="journeyMeta" id="journeyMeta">5-question mission • 4 more to go</div>
+                <div class="journeyTitle" id="journeyTitle">Question 1 of 3</div>
+                <div class="journeyMeta" id="journeyMeta">3-question mission • 4 more to go</div>
               </div>
               <div class="journeyBar"><div class="journeyFill" id="journeyFill"></div></div>
               <div class="streakRow">
@@ -599,7 +599,7 @@
                   <div class="rewardEggSub">Keep going and see what hatches next.</div>
                 </div>
                 <div class="doneText" id="doneText">You solved both parts correctly.</div>
-                <div class="helperText" id="doneMissionText">You finished all 5 questions.</div>
+                <div class="helperText" id="doneMissionText">You finished all 3 questions.</div>
                 <button class="btn primary actionMain" id="actionBtnDone" type="button">Play Again</button>
               </div>
             </div>
@@ -639,7 +639,8 @@
     const SOUND_VER = '20260128a';
     const sounds = {
       correct: new Audio('./correct.mp3?v=' + SOUND_VER),
-      wrong: new Audio('./wrong.mp3?v=' + SOUND_VER)
+      wrong: new Audio('./wrong.mp3?v=' + SOUND_VER),
+      tada: new Audio('./tada.mp3?v=' + SOUND_VER)
     };
     Object.values(sounds).forEach(a=>{ a.preload='auto'; a.playsInline=true; });
     let soundUnlocked = false;
@@ -700,7 +701,7 @@
       journeyFill: document.getElementById('journeyFill'),
       streakLabel: document.getElementById('streakLabel'),
       streakText: document.getElementById('streakText'),
-      streakDots: [1,2,3,4,5].map(n=>document.getElementById('streak'+n)),
+      streakDots: [1,2,3].map(n=>document.getElementById('streak'+n)),
       actionBtnA: document.getElementById('actionBtnA'),
       actionBtnB: document.getElementById('actionBtnB'),
       actionBtnDone: document.getElementById('actionBtnDone'),
@@ -743,7 +744,7 @@
       smallNameSentence: document.getElementById('smallNameSentence')
     };
 
-    const TOTAL_QUESTIONS = 5;
+    const TOTAL_QUESTIONS = 3;
     let state = null;
     let solvedCount = 0;
 
@@ -1046,7 +1047,8 @@
         larger,
         diff,
         total: smaller + larger,
-        current:'a'
+        current:'a',
+        __tadaPlayed:false
       };
       render();
       configureModelLabels();
@@ -1205,6 +1207,10 @@
         els.sideNote.textContent = `You completed the full ${TOTAL_QUESTIONS}-question set.`;
         els.statusA.textContent = 'Done';
         els.statusB.textContent = 'Done';
+        if(!state.__tadaPlayed){
+          state.__tadaPlayed = true;
+          playSound('tada');
+        }
       }
       requestAnimationFrame(fitActiveModel);
     }

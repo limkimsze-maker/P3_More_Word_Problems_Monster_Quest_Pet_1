@@ -841,22 +841,6 @@
           diffHint: 'Now drag 1 number onto the model.'
         };
       }
-      if(solvedCount < 3){
-        return {
-          sumEditable: ['sumNameRightZone','sumValueRightZone'],
-          diffEditable: ['diffNameBottomZone','diffValueBottomZone'],
-          sumHint: 'Now drag 1 name and 1 number onto the model.',
-          diffHint: 'Now drag 1 name and 1 number onto the model.'
-        };
-      }
-      if(solvedCount < 4){
-        return {
-          sumEditable: ['sumNameRightZone','sumValueLeftZone','sumValueRightZone'],
-          diffEditable: ['diffNameBottomZone','diffValueTopZone','diffValueBottomZone'],
-          sumHint: 'Now drag 3 cards onto the model.',
-          diffHint: 'Now drag 3 cards onto the model.'
-        };
-      }
       return {
         sumEditable: ['sumNameLeftZone','sumNameRightZone','sumValueLeftZone','sumValueRightZone'],
         diffEditable: ['diffNameTopZone','diffNameBottomZone','diffValueTopZone','diffValueBottomZone'],

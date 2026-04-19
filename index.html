@@ -373,6 +373,15 @@
     .bad{box-shadow:0 0 0 3px rgba(225,29,72,.24) inset}
 
     #workPanelBd{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0;height:100%}
+    .sharedDragTray{
+      padding:10px 12px;border-bottom:1px solid rgba(15,23,42,.08);background:#f8fbff;
+      display:none;flex-direction:column;gap:8px;
+    }
+    .sharedDragTray.show{display:flex}
+    .sharedDragTray .modelLabelCard{
+      width:100%;align-self:stretch;margin:0;background:#eef6ff;
+    }
+    .sharedDragTray .dragBank{min-height:52px}
     .workCoach{
       padding:14px 16px;border-bottom:1px solid rgba(15,23,42,.08);background:var(--coach);
       font-size:18px;font-weight:1000;line-height:1.2;
@@ -499,14 +508,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="modelLabelCard">
-                  <div class="modelLabelHead">Drag names and numbers onto the model</div>
-                  <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
-                  <div class="dragBankWrap" id="sumBankWrap">
-                    <div class="dragBankTitle">Drag these cards onto the model.</div>
-                    <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
-                  </div>
-                </div>
                 <div class="entryArea">
                   <div class="eqBox">
                     <span id="eqA1">0</span>
@@ -566,14 +567,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="modelLabelCard">
-                  <div class="modelLabelHead">Drag names and numbers onto the model</div>
-                  <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
-                  <div class="dragBankWrap" id="diffBankWrap">
-                    <div class="dragBankTitle">Drag these cards onto the model.</div>
-                    <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
-                  </div>
-                </div>
                 <div class="entryArea">
                   <div class="eqBox">
                     <span id="eqB1">0</span>
@@ -614,6 +607,26 @@
           <button class="btn" id="btnWorkClearTop" type="button">Clear Working</button>
         </div>
         <div id="workPanelBd">
+          <div class="sharedDragTray" id="sumDragCard">
+            <div class="modelLabelCard">
+              <div class="modelLabelHead">Drag names and numbers onto the model</div>
+              <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
+              <div class="dragBankWrap" id="sumBankWrap">
+                <div class="dragBankTitle">Drag these cards onto the model.</div>
+                <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sharedDragTray" id="diffDragCard">
+            <div class="modelLabelCard">
+              <div class="modelLabelHead">Drag names and numbers onto the model</div>
+              <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
+              <div class="dragBankWrap" id="diffBankWrap">
+                <div class="dragBankTitle">Drag these cards onto the model.</div>
+                <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
+              </div>
+            </div>
+          </div>
           <div class="workCoach" id="workCoach">Step 1: Read the question, then solve part (a) first.<small>Write or draw here. Use the model to help you.</small></div>
           <div class="workCard">
             <div class="workCanvasWrap">
@@ -684,6 +697,8 @@
       sumBank: document.getElementById('sumBank'),
       diffBankWrap: document.getElementById('diffBankWrap'),
       diffBank: document.getElementById('diffBank'),
+      sumDragCard: document.getElementById('sumDragCard'),
+      diffDragCard: document.getElementById('diffDragCard'),
       sumNameLeftZone: document.getElementById('sumNameLeftZone'),
       sumNameRightZone: document.getElementById('sumNameRightZone'),
       sumValueLeftZone: document.getElementById('sumValueLeftZone'),
@@ -1141,6 +1156,8 @@
       els.panelA.classList.toggle('active', s.current==='a' || s.current==='aReady');
       els.panelB.classList.toggle('active', s.current==='b' || s.current==='bReady');
       els.panelDone.classList.toggle('active', s.current==='setDone');
+      els.sumDragCard.classList.toggle('show', s.current==='a' || s.current==='aReady');
+      els.diffDragCard.classList.toggle('show', s.current==='b' || s.current==='bReady');
 
       if(s.current==='a'){
         const needLabelA = state.labelPlan && state.labelPlan.sumEditable.length;

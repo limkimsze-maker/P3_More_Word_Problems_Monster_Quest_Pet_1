@@ -679,6 +679,48 @@
     document.getElementById('btnUnlockAudio').addEventListener('click', unlockSound);
     window.addEventListener('pointerdown', ()=>{ if(!soundUnlocked) unlockSound(); }, {once:true, passive:true});
 
+
+
+    let stageCompleteSent = false;
+    let stageCompleteTimer = null;
+    function signalStageComplete(stageNumber){
+      if(stageCompleteSent) return;
+      stageCompleteSent = true;
+      try {
+        const key = 'monsterQuest_highestCompleted';
+        const current = Number(localStorage.getItem(key) || 0);
+        if (stageNumber > current) localStorage.setItem(key, String(stageNumber));
+        localStorage.setItem('monsterQuest_justUnlocked', String(Math.min(8, stageNumber + 1)));
+      } catch (e) {}
+
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'monster-quest-stage-complete',
+            stage: stageNumber,
+            nextStage: Math.min(8, stageNumber + 1)
+          }, '*');
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const hubCandidates = [
+          './monster-quest-stage-hub-return-to-map.html?completed=' + stageNumber,
+          './monster-quest-stage-hub.html?completed=' + stageNumber,
+          '../monster-quest-stage-hub-return-to-map.html?completed=' + stageNumber,
+          '../monster-quest-stage-hub.html?completed=' + stageNumber
+        ];
+        window.location.href = hubCandidates[0];
+      } catch (e) {}
+    }
+
+    function queueStageComplete(stageNumber, delayMs){
+      if(stageCompleteSent) return;
+      clearTimeout(stageCompleteTimer);
+      stageCompleteTimer = setTimeout(()=>signalStageComplete(stageNumber), Math.max(0, delayMs || 0));
+    }
+
     const NAME_PAIRS = [
       ['Aiden','Mia'],['Ryan','Olivia'],['Ethan','Sophie'],['Lucas','Emma'],['Noah','Chloe'],['Daniel','Grace']
     ];
@@ -1276,6 +1318,7 @@
           }
           updateStage();
           updateJourney();
+          if(s.current==='setDone') queueStageComplete(1, 1800);
         }else if(!labelsOk){
           showFeedback('bad', 'Check the name and number cards on the compare model too. Put each name and number in the correct place before subtracting.');
           playSound('wrong');
@@ -1286,14 +1329,14 @@
       }else if(s.current==='bReady'){
         buildVariation();
       }else if(s.current==='setDone'){
-        solvedCount = 0;
-        buildVariation();
+        signalStageComplete(1);
       }
     }
 
-    document.getElementById('btnRestartSet').addEventListener('click', ()=>{ solvedCount = 0; buildVariation(); });
+    document.getElementById('btnRestartSet').addEventListener('click', ()=>{ clearTimeout(stageCompleteTimer); stageCompleteSent = false; solvedCount = 0; buildVariation(); });
     els.actionBtnA.addEventListener('click', checkCurrent);
     els.actionBtnB.addEventListener('click', checkCurrent);
+    els.actionBtnDone.textContent = 'Continue to Stage Map';
     els.actionBtnDone.addEventListener('click', checkCurrent);
     document.getElementById('btnHint').addEventListener('click', ()=>{
       const s = state;

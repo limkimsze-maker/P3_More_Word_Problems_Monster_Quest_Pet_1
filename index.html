@@ -447,7 +447,7 @@
 </head>
 <body>
 
-  <a class="back-main-btn" href="https://limkimsze-maker.github.io/P3_More_Word_Problems_Monster_Quest_Main_Page/">Back to Main Page</a>
+  <a class="back-main-btn" id="backMainBtn" href="https://limkimsze-maker.github.io/P3_More_Word_Problems_Monster_Quest_Main_Page/" target="_top" rel="noopener">Back to Main Page</a>
 
   <div class="app">
     <div class="topbar">
@@ -714,38 +714,60 @@
 
 
 
+    const MAIN_PAGE_URL = 'https://limkimsze-maker.github.io/P3_More_Word_Problems_Monster_Quest_Main_Page/';
     let stageCompleteSent = false;
     let stageCompleteTimer = null;
-    function signalStageComplete(stageNumber){
-      if(stageCompleteSent) return;
-      stageCompleteSent = true;
-      try {
-        const key = 'monsterQuest_highestCompleted';
-        const current = Number(localStorage.getItem(key) || 0);
-        if (stageNumber > current) localStorage.setItem(key, String(stageNumber));
-        localStorage.setItem('monsterQuest_justUnlocked', String(Math.min(8, stageNumber + 1)));
-      } catch (e) {}
 
-      try {
-        if (window.parent && window.parent !== window) {
+    function goToMainPage(options){
+      const opts = options || {};
+      const stageNumber = opts.stageNumber || 1;
+      const completed = !!opts.completed;
+      const url = MAIN_PAGE_URL + (completed ? '?completed=' + encodeURIComponent(stageNumber) + '&from=stage' + encodeURIComponent(stageNumber) : '');
+
+      try{
+        if(completed){
+          const key = 'monsterQuest_highestCompleted';
+          const current = Number(localStorage.getItem(key) || 0);
+          if(stageNumber > current) localStorage.setItem(key, String(stageNumber));
+          localStorage.setItem('monsterQuest_justUnlocked', String(Math.min(8, stageNumber + 1)));
+        }
+      }catch(e){}
+
+      try{
+        if(completed && window.parent && window.parent !== window){
           window.parent.postMessage({
             type: 'monster-quest-stage-complete',
             stage: stageNumber,
-            nextStage: Math.min(8, stageNumber + 1)
+            nextStage: Math.min(8, stageNumber + 1),
+            returnToMain: true
           }, '*');
-          return;
         }
-      } catch (e) {}
+      }catch(e){}
 
-      try {
-        const hubCandidates = [
-          './monster-quest-stage-hub-return-to-map.html?completed=' + stageNumber,
-          './monster-quest-stage-hub.html?completed=' + stageNumber,
-          '../monster-quest-stage-hub-return-to-map.html?completed=' + stageNumber,
-          '../monster-quest-stage-hub.html?completed=' + stageNumber
-        ];
-        window.location.href = hubCandidates[0];
-      } catch (e) {}
+      try{
+        if(window.top && window.top !== window){
+          window.top.location.href = url;
+        }else{
+          window.location.href = url;
+        }
+      }catch(e){
+        window.location.href = url;
+      }
+    }
+
+    const backMainBtn = document.getElementById('backMainBtn');
+    if(backMainBtn){
+      backMainBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        clearTimeout(stageCompleteTimer);
+        goToMainPage({completed:false, stageNumber:1});
+      });
+    }
+
+    function signalStageComplete(stageNumber){
+      if(stageCompleteSent) return;
+      stageCompleteSent = true;
+      goToMainPage({completed:true, stageNumber:stageNumber || 1});
     }
 
     function queueStageComplete(stageNumber, delayMs){

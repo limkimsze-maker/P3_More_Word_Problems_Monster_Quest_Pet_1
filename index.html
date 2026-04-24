@@ -447,7 +447,7 @@
 </head>
 <body>
 
-  <a class="back-main-btn" id="backMainBtn" href="https://limkimsze-maker.github.io/P3_More_Word_Problems_Monster_Quest_Main_Page/" target="_top" rel="noopener">Back to Main Page</a>
+  <a class="back-main-btn" id="backMainBtn" href="https://limkimsze-maker.github.io/P3_More_Word_Problems_Monster_Quest_Main_Page/?from=stage1&return=manual" target="_top" rel="noopener">Back to Main Page</a>
 
   <div class="app">
     <div class="topbar">
@@ -722,7 +722,18 @@
       const opts = options || {};
       const stageNumber = opts.stageNumber || 1;
       const completed = !!opts.completed;
-      const url = MAIN_PAGE_URL + (completed ? '?completed=' + encodeURIComponent(stageNumber) + '&from=stage' + encodeURIComponent(stageNumber) : '');
+
+      // IMPORTANT:
+      // When Stage 1 is opened from "Try Any Topic", the top page may already be the
+      // main Monster Quest page. Setting location to the exact same URL can fail to refresh
+      // the main page/iframe state on the second visit. A small cache-busting return query
+      // forces the top page to reload cleanly every time.
+      const params = new URLSearchParams();
+      params.set('from', 'stage' + stageNumber);
+      params.set('return', completed ? 'completed' : 'manual');
+      params.set('t', String(Date.now()));
+      if(completed) params.set('completed', String(stageNumber));
+      const url = MAIN_PAGE_URL + '?' + params.toString();
 
       try{
         if(completed){
@@ -746,12 +757,13 @@
 
       try{
         if(window.top && window.top !== window){
-          window.top.location.href = url;
+          window.top.location.replace(url);
         }else{
-          window.location.href = url;
+          window.location.replace(url);
         }
       }catch(e){
-        window.location.href = url;
+        try{ window.location.replace(url); }
+        catch(err){ window.location.href = url; }
       }
     }
 

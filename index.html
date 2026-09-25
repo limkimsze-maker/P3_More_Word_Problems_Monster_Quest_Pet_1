@@ -730,6 +730,79 @@
         overflow:visible !important;
         padding-bottom:calc(28px + env(safe-area-inset-bottom)) !important;
       }
+
+      /* Let the active question panel take its natural height on phones. */
+      .questionArea{
+        display:block !important;
+        padding:8px !important;
+      }
+      .storyCol{
+        margin-bottom:10px !important;
+      }
+      .stageCol{
+        min-height:0 !important;
+        height:auto !important;
+        padding:8px !important;
+        overflow:visible !important;
+      }
+      .stageStack{
+        position:relative !important;
+        flex:0 0 auto !important;
+        min-height:0 !important;
+        height:auto !important;
+        overflow:visible !important;
+      }
+      .stagePanel{
+        position:relative !important;
+        inset:auto !important;
+        min-height:0 !important;
+        height:auto !important;
+        overflow:visible !important;
+      }
+      .stagePanel:not(.active){
+        display:none !important;
+      }
+      .stagePanel.active{
+        display:flex !important;
+      }
+
+      /* Keep compare-model number cards inside the model instead of the prompt/equation. */
+      .modelWrap{
+        flex:0 0 auto !important;
+        min-height:0 !important;
+        height:auto !important;
+        padding:22px 10px 12px !important;
+        overflow:visible !important;
+      }
+      .modelWrapInner{
+        width:100% !important;
+        transform:none !important;
+        overflow:visible !important;
+      }
+      #compareModel .compareTopNumber{
+        height:54px !important;
+      }
+      #compareModel .modelDrop.topSlot{
+        top:2px !important;
+      }
+      #compareModel .bottomLabels{
+        height:58px !important;
+      }
+      #compareModel .modelDrop.bottomSlot{
+        top:2px !important;
+      }
+      #compareModel .compareRow{
+        margin-bottom:10px !important;
+      }
+      .entryArea{
+        position:relative !important;
+        z-index:2 !important;
+      }
+      .feedback{
+        position:relative !important;
+        margin-top:10px !important;
+      }
+
       #toolsCard{
         min-height:520px !important;
         height:auto !important;
@@ -1655,6 +1728,7 @@
 
     function focusCurrentInput(){
       requestAnimationFrame(()=>{
+        if(window.matchMedia && window.matchMedia('(max-width:1100px)').matches) return;
         if(state.current==='a') els.sumEqAns.focus();
         else if(state.current==='b') els.diffEqAns.focus();
       });
@@ -1685,6 +1759,8 @@
         }
       }else if(s.current==='aReady'){
         s.current='b';
+        els.feedback.className='feedback';
+        els.feedback.textContent='';
         updateStage();
         updateJourney();
         focusCurrentInput();

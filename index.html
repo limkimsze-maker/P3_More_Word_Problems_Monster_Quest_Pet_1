@@ -843,35 +843,46 @@
 
   <style id="monster-quest-iframe-mobile-scroll-fix">
     @media (max-width:1100px){
+      /* Use normal document scrolling inside the Monster Quest iframe.
+         Nested scrolling on .app can get trapped by mobile browsers. */
       html,body{
-        height:100dvh !important;
-        min-height:0 !important;
-        overflow:hidden !important;
-      }
-      body{
-        padding-bottom:0 !important;
-      }
-      .app{
-        width:100% !important;
-        height:100dvh !important;
-        min-height:0 !important;
-        max-height:100dvh !important;
+        height:auto !important;
+        min-height:100% !important;
         overflow-x:hidden !important;
         overflow-y:auto !important;
         -webkit-overflow-scrolling:touch !important;
-        overscroll-behavior-y:contain;
-        touch-action:pan-y;
+      }
+      body{
         padding-bottom:calc(120px + env(safe-area-inset-bottom)) !important;
+        touch-action:pan-y;
+      }
+      .app{
+        width:100% !important;
+        height:auto !important;
+        min-height:100dvh !important;
+        max-height:none !important;
+        overflow:visible !important;
+        padding-bottom:0 !important;
       }
       .main{
         overflow:visible !important;
         flex:none !important;
+        min-height:0 !important;
+      }
+      .card,
+      .questionArea,
+      .stageCol,
+      .stageStack,
+      .stagePanel,
+      #toolsCard,
+      #workPanelBd{
+        overflow:visible !important;
       }
       .footer{
         margin-bottom:calc(24px + env(safe-area-inset-bottom)) !important;
       }
       #toolsCard{
-        scroll-margin-bottom:120px;
+        scroll-margin-bottom:140px;
       }
     }
   </style>

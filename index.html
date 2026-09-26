@@ -1094,7 +1094,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="sumBankWrap">
-                <div class="dragBankTitle">On a phone: tap the card once to place it. You can also drag it.</div>
+                <div class="dragBankTitle">On a phone: tap the card once — it will move into the correct empty box. You can also drag it.</div>
                 <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
               </div>
             </div>
@@ -1104,7 +1104,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="diffBankWrap">
-                <div class="dragBankTitle">On a phone: tap the card once to place it. You can also drag it.</div>
+                <div class="dragBankTitle">On a phone: tap the card once — it will move into the correct empty box. You can also drag it.</div>
                 <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
               </div>
             </div>
@@ -1489,9 +1489,25 @@
           document.querySelectorAll('.dropZone,.dragBank').forEach(el=>el.classList.remove('over'));
         });
 
+        chip.addEventListener('pointerup', (e)=>{
+          if(e.pointerType === 'mouse') return;
+          if(!chip.parentElement || !chip.parentElement.classList.contains('dragBank')) return;
+
+          const editableTargets = activeEditableTargetsForBank(chip.dataset.bankId);
+          if(editableTargets.length === 1){
+            e.preventDefault();
+            e.stopPropagation();
+            chip.dataset.touchPlaced = '1';
+            placeChipIntoTarget(editableTargets[0], chip);
+            setTimeout(()=>{ delete chip.dataset.touchPlaced; }, 0);
+          }
+        });
+
         chip.addEventListener('click', (e)=>{
           e.preventDefault();
           e.stopPropagation();
+
+          if(chip.dataset.touchPlaced === '1') return;
 
           const bankId = chip.dataset.bankId;
           const editableTargets = activeEditableTargetsForBank(bankId);
@@ -1680,6 +1696,12 @@
       updateStage();
       updateJourney();
       focusCurrentInput();
+
+      // New question = fresh working space, including after mobile layout settles.
+      requestAnimationFrame(()=>{
+        if(typeof clearWorkingSpace === 'function') clearWorkingSpace();
+        if(typeof resizeCanvas === 'function') resizeCanvas();
+      });
     }
 
     function render(){
@@ -1915,6 +1937,10 @@
       }else if(s.current==='bReady'){
         clearWorkingSpace();
         buildVariation();
+        requestAnimationFrame(()=>{
+          clearWorkingSpace();
+          resizeCanvas();
+        });
       }else if(s.current==='setDone'){
         signalStageComplete(1);
       }

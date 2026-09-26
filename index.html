@@ -1489,7 +1489,9 @@
           document.querySelectorAll('.dropZone,.dragBank').forEach(el=>el.classList.remove('over'));
         });
 
-        chip.addEventListener('pointerup', (e)=>{
+        // Phones: place a single required card immediately on touch-down.
+        // This avoids unreliable native HTML drag/drop inside mobile iframes.
+        chip.addEventListener('pointerdown', (e)=>{
           if(e.pointerType === 'mouse') return;
           if(!chip.parentElement || !chip.parentElement.classList.contains('dragBank')) return;
 
@@ -1499,7 +1501,7 @@
             e.stopPropagation();
             chip.dataset.touchPlaced = '1';
             placeChipIntoTarget(editableTargets[0], chip);
-            setTimeout(()=>{ delete chip.dataset.touchPlaced; }, 0);
+            setTimeout(()=>{ delete chip.dataset.touchPlaced; }, 80);
           }
         });
 
@@ -1702,6 +1704,10 @@
         if(typeof clearWorkingSpace === 'function') clearWorkingSpace();
         if(typeof resizeCanvas === 'function') resizeCanvas();
       });
+      setTimeout(()=>{
+        if(typeof clearWorkingSpace === 'function') clearWorkingSpace();
+        if(typeof resizeCanvas === 'function') resizeCanvas();
+      }, 120);
     }
 
     function render(){
@@ -1941,6 +1947,10 @@
           clearWorkingSpace();
           resizeCanvas();
         });
+        setTimeout(()=>{
+          clearWorkingSpace();
+          resizeCanvas();
+        }, 160);
       }else if(s.current==='setDone'){
         signalStageComplete(1);
       }

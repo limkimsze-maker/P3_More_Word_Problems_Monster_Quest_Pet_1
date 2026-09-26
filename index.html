@@ -1966,6 +1966,18 @@
     initDragAndDrop();
     buildVariation();
     requestAnimationFrame(()=>{ resizeCanvas(); fitActiveModel(); positionValueBoxes(); });
+
+    // When this activity is opened inside the Monster Quest stage iframe,
+    // override the parent page's scrolling="no" so mobile users can reach
+    // Part (a), Part (b), and the Working Space.
+    try{
+      if(window.parent !== window && window.frameElement){
+        window.frameElement.setAttribute('scrolling','auto');
+        window.frameElement.style.overflow='auto';
+        window.frameElement.style.webkitOverflowScrolling='touch';
+        window.frameElement.style.touchAction='pan-y';
+      }
+    }catch(e){}
   })();
   </script>
 </body>

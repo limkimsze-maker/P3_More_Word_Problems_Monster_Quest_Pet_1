@@ -1094,7 +1094,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="sumBankWrap">
-                <div class="dragBankTitle">On a phone: tap the card once — it will move into the correct empty box. You can also drag it.</div>
+                <div class="dragBankTitle">On a phone: tap a card once to place it in the correct box. You can also drag it.</div>
                 <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
               </div>
             </div>
@@ -1104,7 +1104,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="diffBankWrap">
-                <div class="dragBankTitle">On a phone: tap the card once — it will move into the correct empty box. You can also drag it.</div>
+                <div class="dragBankTitle">On a phone: tap a card once to place it in the correct box. You can also drag it.</div>
                 <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
               </div>
             </div>
@@ -1470,6 +1470,13 @@
       );
     }
 
+    function matchingEditableTargetForChip(chip){
+      if(!chip) return null;
+      const matches = activeEditableTargetsForBank(chip.dataset.bankId)
+        .filter(zone => String(zone.dataset.correct) === String(chip.dataset.label));
+      return matches.length === 1 ? matches[0] : null;
+    }
+
     function createChip(label, bankId, locked=false){
       const chip = document.createElement('div');
       chip.className = 'dragChip' + (locked ? ' lockedChip' : '');
@@ -1489,19 +1496,19 @@
           document.querySelectorAll('.dropZone,.dragBank').forEach(el=>el.classList.remove('over'));
         });
 
-        // Phones: place a single required card immediately on touch-down.
+        // Phones: tap a card once and place it in its unique correct editable box.
         // This avoids unreliable native HTML drag/drop inside mobile iframes.
         chip.addEventListener('pointerdown', (e)=>{
           if(e.pointerType === 'mouse') return;
           if(!chip.parentElement || !chip.parentElement.classList.contains('dragBank')) return;
 
-          const editableTargets = activeEditableTargetsForBank(chip.dataset.bankId);
-          if(editableTargets.length === 1){
+          const target = matchingEditableTargetForChip(chip);
+          if(target){
             e.preventDefault();
             e.stopPropagation();
             chip.dataset.touchPlaced = '1';
-            placeChipIntoTarget(editableTargets[0], chip);
-            setTimeout(()=>{ delete chip.dataset.touchPlaced; }, 80);
+            placeChipIntoTarget(target, chip);
+            setTimeout(()=>{ delete chip.dataset.touchPlaced; }, 120);
           }
         });
 
@@ -1511,13 +1518,12 @@
 
           if(chip.dataset.touchPlaced === '1') return;
 
-          const bankId = chip.dataset.bankId;
-          const editableTargets = activeEditableTargetsForBank(bankId);
+          const target = matchingEditableTargetForChip(chip);
 
-          // On phones, native HTML drag-and-drop is unreliable.
-          // If this part has only one editable target, one tap places the card immediately.
-          if(chip.parentElement && chip.parentElement.classList.contains('dragBank') && editableTargets.length === 1){
-            placeChipIntoTarget(editableTargets[0], chip);
+          // On phones, a single tap places the card in its unique correct editable box.
+          // Desktop drag/drop and tap-card-then-target still remain available.
+          if(chip.parentElement && chip.parentElement.classList.contains('dragBank') && target){
+            placeChipIntoTarget(target, chip);
             return;
           }
 
@@ -1941,6 +1947,7 @@
           playSound('wrong');
         }
       }else if(s.current==='bReady'){
+        // Next Question always starts with a completely fresh Working Space.
         clearWorkingSpace();
         buildVariation();
         requestAnimationFrame(()=>{
@@ -1951,6 +1958,10 @@
           clearWorkingSpace();
           resizeCanvas();
         }, 160);
+        setTimeout(()=>{
+          clearWorkingSpace();
+          resizeCanvas();
+        }, 420);
       }else if(s.current==='setDone'){
         signalStageComplete(1);
       }

@@ -231,6 +231,12 @@
       display:inline-flex;align-items:center;justify-content:center;cursor:grab;user-select:none;
     }
     .dragChip.dragging{opacity:.45}
+    .dragChip.selectedChip{
+      background:#dbeafe;
+      border-color:#2563eb;
+      box-shadow:0 0 0 4px rgba(37,99,235,.18),0 4px 12px rgba(15,23,42,.08);
+      transform:translateY(-1px);
+    }
     
     .dragChip.lockedChip{cursor:default;background:#e2e8f0;border-color:#cbd5e1;color:#0f172a}
     .modelWrapInner{
@@ -1087,7 +1093,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="sumBankWrap">
-                <div class="dragBankTitle">Drag these cards onto the model.</div>
+                <div class="dragBankTitle">Tap a card, then tap “Drop here” — or drag it.</div>
                 <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
               </div>
             </div>
@@ -1097,7 +1103,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="diffBankWrap">
-                <div class="dragBankTitle">Drag these cards onto the model.</div>
+                <div class="dragBankTitle">Tap a card, then tap “Drop here” — or drag it.</div>
                 <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
               </div>
             </div>
@@ -1416,6 +1422,40 @@
     }
 
     let dragChipCounter = 0;
+    let selectedDragChip = null;
+
+    function clearDragSelection(){
+      document.querySelectorAll('.dragChip.selectedChip').forEach(chip=>chip.classList.remove('selectedChip'));
+      selectedDragChip = null;
+    }
+
+    function placeChipIntoTarget(el, chip){
+      if(!el || !chip || chip.classList.contains('lockedChip')) return false;
+      const from = chip.parentElement;
+
+      if(el.classList.contains('dragBank')){
+        if(from && from.classList.contains('dropZone')) setZonePlaceholder(from);
+        el.appendChild(chip);
+        clearDragSelection();
+        return true;
+      }
+
+      if(el.dataset.editable !== '1') return false;
+      if(from === el){
+        clearDragSelection();
+        return true;
+      }
+
+      const existing = el.querySelector('.dragChip:not(.lockedChip)');
+      if(existing) returnChipToBank(existing);
+      if(from && from.classList.contains('dropZone')) setZonePlaceholder(from);
+
+      el.innerHTML = '';
+      el.appendChild(chip);
+      el.classList.add('filled');
+      clearDragSelection();
+      return true;
+    }
 
     function createChip(label, bankId, locked=false){
       const chip = document.createElement('div');
@@ -1435,6 +1475,29 @@
           chip.classList.remove('dragging');
           document.querySelectorAll('.dropZone,.dragBank').forEach(el=>el.classList.remove('over'));
         });
+
+        chip.addEventListener('click', (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+
+          const bankId = chip.dataset.bankId;
+          const editableTargets = Array.from(document.querySelectorAll('.dropZone[data-editable="1"]'))
+            .filter(zone=>zone.dataset.bankId === bankId && zone.offsetParent !== null);
+
+          // In the one-card warm-up, a tap can place the card immediately.
+          if(chip.parentElement && chip.parentElement.classList.contains('dragBank') && editableTargets.length === 1){
+            placeChipIntoTarget(editableTargets[0], chip);
+            return;
+          }
+
+          const alreadySelected = selectedDragChip === chip;
+          clearDragSelection();
+          if(!alreadySelected){
+            selectedDragChip = chip;
+            chip.classList.add('selectedChip');
+          }
+        });
+
         chip.addEventListener('dblclick', ()=>returnChipToBank(chip));
       }
       return chip;
@@ -1471,6 +1534,7 @@
     }
 
     function fillBank(bank, labels){
+      clearDragSelection();
       bank.innerHTML = '';
       labels.forEach(label=>bank.appendChild(createChip(label, bank.id)));
     }
@@ -1497,21 +1561,15 @@
         el.classList.remove('over');
         const chipId = e.dataTransfer.getData('text/plain');
         const chip = chipId ? document.getElementById(chipId) : null;
-        if(!chip || chip.classList.contains('lockedChip')) return;
-        const from = chip.parentElement;
-        if(el.classList.contains('dragBank')){
-          if(from && from.classList.contains('dropZone')) setZonePlaceholder(from);
-          el.appendChild(chip);
-          return;
-        }
-        if(el.dataset.editable !== '1') return;
-        if(from === el) return;
-        const existing = el.querySelector('.dragChip:not(.lockedChip)');
-        if(existing) returnChipToBank(existing);
-        if(from && from.classList.contains('dropZone')) setZonePlaceholder(from);
-        el.innerHTML = '';
-        el.appendChild(chip);
-        el.classList.add('filled');
+        placeChipIntoTarget(el, chip);
+      });
+
+      // Mobile-friendly alternative to HTML5 drag-and-drop:
+      // tap a card, then tap its target box.
+      el.addEventListener('click', (e)=>{
+        if(!selectedDragChip) return;
+        e.preventDefault();
+        placeChipIntoTarget(el, selectedDragChip);
       });
     }
 
@@ -1571,6 +1629,9 @@
     }
 
     function buildVariation(){
+      if(typeof clearWorkingSpace === 'function') clearWorkingSpace();
+      clearDragSelection();
+
       const pair = pick(NAME_PAIRS);
       const item = pick(ITEMS);
       let smaller, diff;
@@ -1912,7 +1973,14 @@
     canvas.addEventListener('pointermove',move);
     canvas.addEventListener('pointerup',up);
     canvas.addEventListener('pointercancel',up);
-    btnWorkClear.addEventListener('click',()=>{ strokes=[]; redraw(); });
+
+    function clearWorkingSpace(){
+      strokes = [];
+      drawing = false;
+      redraw();
+    }
+
+    btnWorkClear.addEventListener('click', clearWorkingSpace);
     new ResizeObserver(()=>requestAnimationFrame(resizeCanvas)).observe(wrap);
     const layoutObserver = new ResizeObserver(()=>{ if(state) requestAnimationFrame(fitActiveModel); });
     document.querySelectorAll('.modelWrap, #sumModel, #compareModel, .stageCol').forEach(el=>layoutObserver.observe(el));

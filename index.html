@@ -229,6 +229,7 @@
       min-height:38px;padding:8px 12px;border-radius:999px;background:#ffffff;border:2px solid #93c5fd;
       box-shadow:0 4px 12px rgba(15,23,42,.08);font-size:15px;font-weight:1000;color:#1d4ed8;
       display:inline-flex;align-items:center;justify-content:center;cursor:grab;user-select:none;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     }
     .dragChip.dragging{opacity:.45}
     .dragChip.selectedChip{
@@ -1093,7 +1094,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="sumLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="sumBankWrap">
-                <div class="dragBankTitle">Tap a card, then tap “Drop here” — or drag it.</div>
+                <div class="dragBankTitle">On a phone: tap the card once to place it. You can also drag it.</div>
                 <div class="dragBank" id="sumBank" data-bank-id="sumBank"></div>
               </div>
             </div>
@@ -1103,7 +1104,7 @@
               <div class="modelLabelHead">Drag names and numbers onto the model</div>
               <div class="modelLabelHint" id="diffLabelHint">First, look at the names and numbers on the model.</div>
               <div class="dragBankWrap" id="diffBankWrap">
-                <div class="dragBankTitle">Tap a card, then tap “Drop here” — or drag it.</div>
+                <div class="dragBankTitle">On a phone: tap the card once to place it. You can also drag it.</div>
                 <div class="dragBank" id="diffBank" data-bank-id="diffBank"></div>
               </div>
             </div>
@@ -1457,6 +1458,18 @@
       return true;
     }
 
+    function activeEditableTargetsForBank(bankId){
+      const currentTargets = state && (state.current==='a' || state.current==='aReady')
+        ? [els.sumNameLeftZone, els.sumNameRightZone, els.sumValueLeftZone, els.sumValueRightZone]
+        : [els.diffNameTopZone, els.diffNameBottomZone, els.diffValueTopZone, els.diffValueBottomZone];
+
+      return currentTargets.filter(zone=>
+        zone &&
+        zone.dataset.editable === '1' &&
+        zone.dataset.bankId === bankId
+      );
+    }
+
     function createChip(label, bankId, locked=false){
       const chip = document.createElement('div');
       chip.className = 'dragChip' + (locked ? ' lockedChip' : '');
@@ -1481,10 +1494,10 @@
           e.stopPropagation();
 
           const bankId = chip.dataset.bankId;
-          const editableTargets = Array.from(document.querySelectorAll('.dropZone[data-editable="1"]'))
-            .filter(zone=>zone.dataset.bankId === bankId && zone.offsetParent !== null);
+          const editableTargets = activeEditableTargetsForBank(bankId);
 
-          // In the one-card warm-up, a tap can place the card immediately.
+          // On phones, native HTML drag-and-drop is unreliable.
+          // If this part has only one editable target, one tap places the card immediately.
           if(chip.parentElement && chip.parentElement.classList.contains('dragBank') && editableTargets.length === 1){
             placeChipIntoTarget(editableTargets[0], chip);
             return;
@@ -1900,13 +1913,14 @@
           playSound('wrong');
         }
       }else if(s.current==='bReady'){
+        clearWorkingSpace();
         buildVariation();
       }else if(s.current==='setDone'){
         signalStageComplete(1);
       }
     }
 
-    document.getElementById('btnRestartSet').addEventListener('click', ()=>{ clearTimeout(stageCompleteTimer); stageCompleteSent = false; solvedCount = 0; buildVariation(); });
+    document.getElementById('btnRestartSet').addEventListener('click', ()=>{ clearTimeout(stageCompleteTimer); stageCompleteSent = false; solvedCount = 0; clearWorkingSpace(); buildVariation(); });
     els.actionBtnA.addEventListener('click', checkCurrent);
     els.actionBtnB.addEventListener('click', checkCurrent);
     els.actionBtnDone.textContent = 'Continue to Stage Map';
